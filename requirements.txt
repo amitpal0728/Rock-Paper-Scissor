@@ -3,3 +3,4 @@ opencv-python-headless
 cvzone
 numpy
 pillow
+mediapipe
