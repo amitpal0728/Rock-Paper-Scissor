@@ -1,5 +1,4 @@
 import random
-import cv2
 import cvzone
 from cvzone.HandTrackingModule import HandDetector
 import streamlit as st
@@ -7,21 +6,23 @@ from PIL import Image
 import numpy as np
 import time
 
+# Set up Streamlit
 st.title("Rock-Paper-Scissors Game")
-st.write("Play Rock-Paper-Scissors using your hand gestures!")
+st.write("Play Rock-Paper-Scissors using hand gestures!")
 
-# Game state management
+# Game States
 if "start_game" not in st.session_state:
     st.session_state.start_game = False
 if "scores" not in st.session_state:
-    st.session_state.scores = [0, 0]  # [AI Score, Player Score]
+    st.session_state.scores = [0, 0]  # AI Score, Player Score
 
-detector = HandDetector(maxHands=1)  # Hand detector setup
-try:
-    imgBG = cv2.imread("RPS_Resources/BG.png")  # Load game background
-except:
-    st.error("Background image 'BG.png' not found in 'RPS_Resources/' directory.")
+# Detector setup
+detector = HandDetector(maxHands=1)
 
+# Load background image
+imgBG = cvzone.load_image("RPS_Resources/BG.png")
+
+# Start Game button
 if st.button("Start Game"):
     st.session_state.start_game = True
     st.session_state.initial_time = time.time()
@@ -29,9 +30,11 @@ if st.button("Start Game"):
     st.session_state.timer = 0
     st.session_state.ai_move = None
 
+# Camera Input
 camera_input = st.camera_input("Take a photo to play!")
 
 if camera_input:
+    # Convert image to OpenCV format
     file_bytes = np.asarray(bytearray(camera_input.read()), dtype=np.uint8)
     img = cv2.imdecode(file_bytes, 1)
 
@@ -39,10 +42,11 @@ if camera_input:
     imagescaled = cv2.resize(img, (0, 0), fx=0.875, fy=0.875)
     imagescaled = imagescaled[:, 80:480]
 
-    # Detect hands
+    # Detect hand
     hands, img = detector.findHands(imagescaled)
 
     if st.session_state.start_game:
+        # Timer
         if not st.session_state.state_result:
             st.session_state.timer = time.time() - st.session_state.initial_time
             st.write(f"Timer: {int(st.session_state.timer)} seconds")
@@ -52,6 +56,7 @@ if camera_input:
             st.session_state.timer = 0
 
             if hands:
+                # Player move detection
                 hand = hands[0]
                 fingers = detector.fingersUp(hand)
                 playermove = None
@@ -67,7 +72,7 @@ if camera_input:
                 try:
                     imgAI = cv2.imread(f"RPS_Resources/{st.session_state.ai_move}.png", cv2.IMREAD_UNCHANGED)
                 except:
-                    st.error(f"AI move image 'RPS_Resources/{st.session_state.ai_move}.png' not found.")
+                    st.error(f"AI move image missing: 'RPS_Resources/{st.session_state.ai_move}.png'")
 
                 # Determine winner
                 if (playermove == 1 and st.session_state.ai_move == 3) or \
@@ -79,10 +84,8 @@ if camera_input:
                      (st.session_state.ai_move == 3 and playermove == 2):
                     st.session_state.scores[0] += 1  # AI wins
 
+    # Show images
     if st.session_state.state_result and st.session_state.ai_move:
         imgBG = cvzone.overlayPNG(imgBG, imgAI, (149, 310))
+    st.image(imgBG, caption="Game Background", channels="BGR")
 
-    st.image(imgBG, channels="BGR", caption="Game Background")
-
-st.sidebar.write(f"AI Score: {st.session_state.scores[0]}")
-st.sidebar.write(f"Player Score: {st.session_state.scores[1]}")
