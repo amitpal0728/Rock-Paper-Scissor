@@ -1,3 +1,3 @@
-opencv-python
-cvzone
 streamlit
+opencv-python-headless
+cvzone
