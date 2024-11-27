@@ -4,3 +4,4 @@ cvzone
 numpy
 pillow
 mediapipe
+uvicorn
